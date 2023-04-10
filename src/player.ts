@@ -12,9 +12,9 @@ type PlayerOptions = {
 }
 
 export class Player {
-  private options = {speed: 3, radius: 20, color: 'black'}
+  private options = {speed: 5, radius: 20, color: 'black'}
   private context: CanvasRenderingContext2D | null = null
-  position = {x: 20, y: 20, angle: 0}
+  position = {x: 0, y: 0, angle: 0}
 
   constructor(
     ctx: CanvasRenderingContext2D | null,
@@ -27,33 +27,28 @@ export class Player {
   }
 
   private init(): void {
-    this.update()
+    this.move()
   }
 
-  private draw(): void {
-    if (!this.context) return
+  draw(ctx: CanvasRenderingContext2D | null): void {
+    if (!ctx) return
 
-    const {color} = this.options
+    const {color, radius} = this.options
     const {x, y, angle} = this.position
-    const ctx = this.context
     const ro = (Math.PI / 8) * angle
-    const tx = x + 0.5 * 50
-    const ty = y + 0.5 * 50
+    const tx = x + 0.5 * radius
+    const ty = y + 0.5 * radius
 
+    ctx.beginPath()
     ctx.save()
     ctx.translate(tx, ty)
     ctx.rotate(ro)
     ctx.translate(-tx, -ty)
 
     ctx.fillStyle = color
-    ctx.fillRect(x, y, 50, 50)
+    ctx.fillRect(x, y, radius, radius)
     ctx.restore()
-  }
-
-  private update(): void {
-    // this.clear()
-    this.draw()
-    this.move()
+    ctx.closePath()
   }
 
   private move(): void {
@@ -65,24 +60,28 @@ export class Player {
 
       const {speed} = this.options
       const {x, y, angle} = this.position
+      // const ro = (Math.PI / 8) * angle
       let nx = x
       let ny = y
-      this.clear()
 
       switch (e.key) {
         case 'ArrowUp': {
+          this.position.angle = angle + 1 >= 4 ? 0 : angle + 1
           ny -= speed
           break
         }
         case 'ArrowDown': {
+          this.position.angle = angle - 1 < 0 ? 4 : angle - 1
           ny += speed
           break
         }
         case 'ArrowLeft': {
+          this.position.angle = angle - 1 < 0 ? 4 : angle - 1
           nx -= speed
           break
         }
         case 'ArrowRight': {
+          this.position.angle = angle + 1 >= 4 ? 0 : angle + 1
           nx += speed
           break
         }
@@ -90,22 +89,8 @@ export class Player {
 
       this.position.x = nx
       this.position.y = ny
-      this.position.angle = angle + 1 >= 4 ? 0 : angle + 1
 
-      this.draw()
+      this.draw(this.context)
     })
-  }
-
-  private clear() {
-    if (!this.context) return
-
-    const ctx = this.context
-    const {x, y, angle} = this.position
-    const ro = (Math.PI / 8) * angle
-
-    ctx.save()
-    ctx.rotate(ro)
-    ctx.clearRect(x, y, 50, 50)
-    ctx.restore()
   }
 }
