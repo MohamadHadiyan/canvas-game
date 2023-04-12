@@ -1,52 +1,36 @@
-type Position = {
-  x: number
-  y: number
-  angle: number
-}
+import {Entity, EntityInput} from './entity'
 
-type PlayerOptions = {
-  position: Position
-  speed: number
-  radius: number
-  color: string
-}
+export class Player extends Entity {
+  private angle = 0
 
-export class Player {
-  private options = {speed: 5, radius: 20, color: 'black'}
-  private context: CanvasRenderingContext2D | null = null
-  position = {x: 0, y: 0, angle: 0}
-
-  constructor(
-    ctx: CanvasRenderingContext2D | null,
-    {position, ...rest}: PlayerOptions
-  ) {
-    this.position = position
-    this.options = rest
-    this.context = ctx
+  constructor(input: EntityInput) {
+    super(input)
     this.init()
   }
 
   private init(): void {
     this.move()
+    this.draw()
+    this.rotate()
   }
 
-  draw(ctx: CanvasRenderingContext2D | null): void {
-    if (!ctx) return
+  override draw(): void {
+    if (!this.ctx) return
 
-    const {color, radius} = this.options
-    const {x, y, angle} = this.position
-    const ro = (Math.PI / 8) * angle
-    const tx = x + 0.5 * radius
-    const ty = y + 0.5 * radius
+    const {width, height} = this.dimension
+    const {x, y} = this.position
+    const ctx = this.ctx
+
+    const tx = x + 0.5 * width - width / 2
+    const ty = y + 0.5 * height - height / 2
 
     ctx.beginPath()
     ctx.save()
     ctx.translate(tx, ty)
-    ctx.rotate(ro)
+    ctx.rotate(this.angle)
     ctx.translate(-tx, -ty)
-
-    ctx.fillStyle = color
-    ctx.fillRect(x, y, radius, radius)
+    ctx.fillStyle = this.color
+    ctx.fillRect(x - width / 2, y - height / 2, width, height)
     ctx.restore()
     ctx.closePath()
   }
@@ -56,41 +40,51 @@ export class Player {
     document.addEventListener('keydown', e => {
       if (!keys.includes(e.key)) return
 
-      if (!this.context) return
+      if (!this.ctx) return
 
-      const {speed} = this.options
-      const {x, y, angle} = this.position
-      // const ro = (Math.PI / 8) * angle
-      let nx = x
-      let ny = y
+      const {x, y} = this.velocity
+
+      let nx = this.position.x
+      let ny = this.position.y
 
       switch (e.key) {
         case 'ArrowUp': {
-          this.position.angle = angle + 1 >= 4 ? 0 : angle + 1
-          ny -= speed
+          ny += y
+          nx += x
           break
         }
         case 'ArrowDown': {
-          this.position.angle = angle - 1 < 0 ? 4 : angle - 1
-          ny += speed
+          ny -= y
+          nx -= x
           break
         }
         case 'ArrowLeft': {
-          this.position.angle = angle - 1 < 0 ? 4 : angle - 1
-          nx -= speed
+          nx += y
+          ny -= x
           break
         }
         case 'ArrowRight': {
-          this.position.angle = angle + 1 >= 4 ? 0 : angle + 1
-          nx += speed
+          nx -= y
+          ny += x
           break
         }
       }
 
       this.position.x = nx
       this.position.y = ny
+    })
+  }
 
-      this.draw(this.context)
+  rotate() {
+    addEventListener('mousemove', e => {
+      const {x, y} = this.position
+      const nextAngle = Math.atan2(e.clientY - y, e.clientX - x)
+
+      this.angle = nextAngle
+      this.velocity = {
+        x: Math.cos(nextAngle) * 5,
+        y: Math.sin(nextAngle) * 5,
+      }
     })
   }
 }
