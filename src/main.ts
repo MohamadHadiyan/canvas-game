@@ -25,78 +25,52 @@ function init() {
     position: {x: canvas.width / 2, y: canvas.height / 2},
   })
 
+  // ONCLICK
+  player.shoot(options => {
+    projectiles.push(Projectile.generate({...options, ctx}))
+  })
+
   function animate() {
+    requestAnimationFrame(animate)
     ctx?.clearRect(0, 0, canvas.width, canvas.height)
     player.draw()
-    requestAnimationFrame(animate)
 
     projectiles.forEach(projectile => {
       projectile.update()
     })
 
-    enemies.forEach(enemy => {
+    enemies.forEach((enemy, enemyIndex) => {
       enemy.update()
+
+      projectiles.forEach((projectile, projectileIndex) => {
+        const {x, y} = projectile.position
+        const distance = Math.hypot(x - enemy.position.x, y - enemy.position.y)
+        const dimension = projectile.dimension.radius + enemy.dimension.radius
+
+        // Check hit
+        if (distance - dimension < 1) {
+          // wait until the next frame
+          setTimeout(() => {
+            enemies.splice(enemyIndex, 1)
+            projectiles.splice(projectileIndex, 1)
+          })
+        }
+      })
     })
   }
 
   function spawnEnemies() {
     setInterval(() => {
-      const radius = Math.random() * (30 - 10) + 10
-      const position = {x: 0, y: 0}
-
-      if (Math.random() < 0.5) {
-        position.x = Math.random() < 0.5 ? 0 - radius : canvas.width + radius
-        position.y = Math.random() * canvas.height
-      } else {
-        position.x = Math.random() * canvas.width
-        position.y = Math.random() < 0.5 ? 0 - radius : canvas.height + radius
-      }
-
-      const angle = Math.atan2(
-        player.position.y - position.y,
-        player.position.x - position.x
+      enemies.push(
+        Enemy.generate({
+          boundary: {width: canvas.width, height: canvas.height},
+          destinationPosition: player.position,
+          radius: {min: 7, max: 30},
+          ctx,
+        })
       )
-
-      const velocity = {
-        x: Math.cos(angle),
-        y: Math.sin(angle),
-      }
-
-      const options = {
-        position,
-        velocity,
-        color: 'yellow',
-        radius,
-        ctx,
-      }
-
-      enemies.push(new Enemy(options))
     }, 2000)
   }
-
-  addEventListener('click', e => {
-    const angle = Math.atan2(
-      e.clientY - player.position.y,
-      e.clientX - player.position.x
-    )
-    const velocity = {
-      x: Math.cos(angle),
-      y: Math.sin(angle),
-    }
-    const position = {
-      x: player.position.x,
-      y: player.position.y,
-    }
-
-    const projectile = new Projectile({
-      ctx,
-      position,
-      radius: 5,
-      color: 'red',
-      velocity,
-    })
-    projectiles.push(projectile)
-  })
 
   animate()
   spawnEnemies()

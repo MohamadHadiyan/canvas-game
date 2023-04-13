@@ -1,5 +1,10 @@
 import {Entity, EntityInput} from './entity'
 
+type ShootResult = {
+  currentPosition: {x: number; y: number}
+  destinationPosition: {x: number; y: number}
+}
+
 export class Player extends Entity {
   private angle = 0
 
@@ -59,13 +64,13 @@ export class Player extends Entity {
           break
         }
         case 'ArrowLeft': {
-          nx += y
-          ny -= x
+          nx -= y
+          ny += x
           break
         }
         case 'ArrowRight': {
-          nx -= y
-          ny += x
+          nx += y
+          ny -= x
           break
         }
       }
@@ -75,7 +80,7 @@ export class Player extends Entity {
     })
   }
 
-  rotate() {
+  private rotate(): void {
     addEventListener('mousemove', e => {
       const {x, y} = this.position
       const nextAngle = Math.atan2(e.clientY - y, e.clientX - x)
@@ -85,6 +90,15 @@ export class Player extends Entity {
         x: Math.cos(nextAngle) * 5,
         y: Math.sin(nextAngle) * 5,
       }
+    })
+  }
+
+  shoot(callback: (values: ShootResult) => void) {
+    addEventListener('click', e => {
+      callback({
+        currentPosition: this.position,
+        destinationPosition: {y: e.clientY, x: e.clientX},
+      })
     })
   }
 }

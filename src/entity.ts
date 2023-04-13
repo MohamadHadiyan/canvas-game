@@ -6,6 +6,7 @@ export type EntityInput = {
   color?: string
   width?: number
   height?: number
+  speed?: number
 }
 
 export class Entity {
@@ -13,6 +14,7 @@ export class Entity {
   velocity = {x: 0, y: 0}
   dimension = {radius: 0, width: 0, height: 0}
   color = '#fff'
+  speed = 0
   ctx
 
   constructor({
@@ -22,12 +24,14 @@ export class Entity {
     radius = 0,
     height = 0,
     width = 0,
+    speed = 0,
     ctx,
   }: EntityInput) {
     this.ctx = ctx
+    this.speed = speed
+    this.color = color
     this.position = position
     this.velocity = velocity
-    this.color = color
     this.velocity = velocity
     this.dimension = {radius, width, height}
   }
