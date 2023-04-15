@@ -7,7 +7,11 @@ function init() {
   const app = document.querySelector('#app') as HTMLDivElement
 
   const canvas = document.createElement('canvas')
-  const ctx = canvas.getContext('2d')
+  const ctx = canvas.getContext('2d') as CanvasRenderingContext2D
+
+  if (!ctx) return
+
+  let animationId = 0
 
   canvas.height = window.innerHeight - 10
   canvas.width = window.innerWidth
@@ -27,20 +31,37 @@ function init() {
 
   // ONCLICK
   player.shoot(options => {
-    projectiles.push(Projectile.generate({...options, ctx}))
+    projectiles.push(
+      Projectile.generate({
+        ...options,
+        boundary: {width: canvas.width, height: canvas.height},
+        ctx,
+      })
+    )
   })
 
   function animate() {
-    requestAnimationFrame(animate)
-    ctx?.clearRect(0, 0, canvas.width, canvas.height)
+    animationId = requestAnimationFrame(animate)
+    ctx.fillStyle = 'rgba(0,0,0,0.1)'
+    ctx.fillRect(0, 0, canvas.width, canvas.height)
     player.draw()
 
-    projectiles.forEach(projectile => {
-      projectile.update()
+    projectiles.forEach((projectile, index) => {
+      // Remove from edges of screen
+      projectile.update(null, () => projectiles.splice(index, 1))
     })
 
     enemies.forEach((enemy, enemyIndex) => {
-      enemy.update()
+      enemy.update(player.position)
+
+      const {x, y} = player.position
+      const distance = Math.hypot(x - enemy.position.x, y - enemy.position.y)
+      const dimension = player.dimension.width / 2 + enemy.dimension.radius
+
+      // End Game
+      if (distance - dimension < 1) {
+        cancelAnimationFrame(animationId)
+      }
 
       projectiles.forEach((projectile, projectileIndex) => {
         const {x, y} = projectile.position
@@ -50,10 +71,17 @@ function init() {
         // Check hit
         if (distance - dimension < 1) {
           // wait until the next frame
-          setTimeout(() => {
-            enemies.splice(enemyIndex, 1)
-            projectiles.splice(projectileIndex, 1)
-          })
+          if (enemy.dimension.radius - 10 > 5) {
+            enemy.dimension.radius -= 10
+            setTimeout(() => {
+              projectiles.splice(projectileIndex, 1)
+            })
+          } else {
+            setTimeout(() => {
+              enemies.splice(enemyIndex, 1)
+              projectiles.splice(projectileIndex, 1)
+            })
+          }
         }
       })
     })
@@ -65,7 +93,7 @@ function init() {
         Enemy.generate({
           boundary: {width: canvas.width, height: canvas.height},
           destinationPosition: player.position,
-          radius: {min: 7, max: 30},
+          radius: {min: 10, max: 30},
           ctx,
         })
       )

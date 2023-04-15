@@ -2,6 +2,8 @@ export type EntityInput = {
   ctx?: CanvasRenderingContext2D | null
   position?: {x: number; y: number}
   velocity?: {x: number; y: number}
+  boundary?: {width: number; height: number}
+  destinationPosition?: {x: number; y: number}
   radius?: number
   color?: string
   width?: number
@@ -12,6 +14,7 @@ export type EntityInput = {
 export class Entity {
   position = {x: 0, y: 0}
   velocity = {x: 0, y: 0}
+  boundary = {width: 0, height: 0}
   dimension = {radius: 0, width: 0, height: 0}
   color = '#fff'
   speed = 0
@@ -20,6 +23,7 @@ export class Entity {
   constructor({
     position = {x: 0, y: 0},
     velocity = {x: 0, y: 0},
+    boundary = {width: 0, height: 0},
     color = '#fff',
     radius = 0,
     height = 0,
@@ -33,6 +37,7 @@ export class Entity {
     this.position = position
     this.velocity = velocity
     this.velocity = velocity
+    this.boundary = boundary
     this.dimension = {radius, width, height}
   }
 
@@ -57,9 +62,31 @@ export class Entity {
     ctx.restore()
   }
 
-  update() {
+  update(
+    destinationPosition?: {x: number; y: number} | null,
+    onOutBoundary?: () => void
+  ) {
     const {x, y} = this.position
-    const {x: vx, y: vy} = this.velocity
+    const {width, height} = this.boundary
+    const {radius} = this.dimension
+    let {x: vx, y: vy} = this.velocity
+
+    if (destinationPosition) {
+      const {x: dx, y: dy} = destinationPosition
+      const angle = Math.atan2(dy - y, dx - x)
+      vx = Math.cos(angle)
+      vy = Math.sin(angle)
+    }
+
+    if (
+      x < -radius ||
+      x > width + radius ||
+      y < -radius ||
+      y > height + radius
+    ) {
+      onOutBoundary?.()
+      return
+    }
 
     this.draw()
     this.position = {x: x + vx, y: y + vy}

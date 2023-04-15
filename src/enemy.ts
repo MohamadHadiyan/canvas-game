@@ -32,8 +32,11 @@ export class Enemy extends Entity {
     const options = {
       position,
       velocity,
-      color: 'yellow',
+      color: `hsl(${Math.round(Math.random() * 300 + 60)}, ${Math.round(
+        Math.random() * 50 + 10
+      )}%, ${Math.round(Math.random() * 50 + 10)}%)`,
       radius: rndRadius,
+      boundary: rest.boundary,
       ctx: rest.ctx,
     }
 
