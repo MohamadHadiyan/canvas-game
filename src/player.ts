@@ -7,6 +7,9 @@ type ShootResult = {
 
 export class Player extends Entity {
   private angle = 0
+  private shootHandler: (e: MouseEvent) => void = () => null
+  private rotateHandler: (e: MouseEvent) => void = () => null
+  private moveHandler: (e: KeyboardEvent) => void = () => null
 
   constructor(input: EntityInput) {
     super(input)
@@ -42,7 +45,7 @@ export class Player extends Entity {
 
   private move(): void {
     const keys = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight']
-    document.addEventListener('keydown', e => {
+    this.moveHandler = (e: KeyboardEvent) => {
       if (!keys.includes(e.key)) return
 
       if (!this.ctx) return
@@ -77,11 +80,13 @@ export class Player extends Entity {
 
       this.position.x = nx
       this.position.y = ny
-    })
+    }
+
+    document.addEventListener('keydown', this.moveHandler)
   }
 
   private rotate(): void {
-    addEventListener('mousemove', e => {
+    this.rotateHandler = (e: MouseEvent) => {
       const {x, y} = this.position
       const nextAngle = Math.atan2(e.clientY - y, e.clientX - x)
 
@@ -90,15 +95,25 @@ export class Player extends Entity {
         x: Math.cos(nextAngle) * 5,
         y: Math.sin(nextAngle) * 5,
       }
-    })
+    }
+
+    document.addEventListener('mousemove', this.rotateHandler)
   }
 
   shoot(callback: (values: ShootResult) => void) {
-    addEventListener('click', e => {
+    this.shootHandler = (e: MouseEvent) => {
       callback({
         currentPosition: this.position,
         destinationPosition: {y: e.clientY, x: e.clientX},
       })
-    })
+    }
+
+    document.addEventListener('click', this.shootHandler)
+  }
+
+  destroy() {
+    document.removeEventListener('keydown', this.moveHandler)
+    document.removeEventListener('click', this.shootHandler)
+    document.removeEventListener('mousemove', this.rotateHandler)
   }
 }
