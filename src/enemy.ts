@@ -25,8 +25,8 @@ export class Enemy extends Entity {
     const angle = Math.atan2(dy - position.y, dx - position.x)
 
     const velocity = {
-      x: Math.cos(angle),
-      y: Math.sin(angle),
+      x: Math.cos(angle) * (rndRadius / 2),
+      y: Math.sin(angle) * (rndRadius / 2),
     }
 
     const options = {

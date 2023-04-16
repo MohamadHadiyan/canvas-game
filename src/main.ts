@@ -1,15 +1,18 @@
 import {Enemy} from './enemy'
+import {Particle} from './particle'
 import {Player} from './player'
 import {Projectile} from './projectile'
+import {Score} from './score'
 import './style.css'
 
 function init() {
   const app = document.querySelector('#app') as HTMLDivElement
-
   const canvas = document.createElement('canvas')
   const ctx = canvas.getContext('2d') as CanvasRenderingContext2D
 
   if (!ctx) return
+
+  const score = new Score(app)
 
   let animationId = 0
 
@@ -18,27 +21,39 @@ function init() {
   app.appendChild(canvas)
 
   const projectiles: Projectile[] = []
+  const particles: Particle[] = []
   const enemies: Enemy[] = []
-  const player = new Player({
-    ctx,
-    radius: 30,
-    color: 'green',
-    width: 30,
-    height: 30,
-    velocity: {x: 10, y: 10},
-    position: {x: canvas.width / 2, y: canvas.height / 2},
-  })
+  let player: Player = null as unknown as Player
 
-  // ONCLICK
-  player.shoot(options => {
-    projectiles.push(
-      Projectile.generate({
-        ...options,
-        boundary: {width: canvas.width, height: canvas.height},
-        ctx,
-      })
-    )
-  })
+  function run() {
+    projectiles.length = 0
+    particles.length = 0
+    enemies.length = 0
+
+    player = new Player({
+      ctx,
+      radius: 30,
+      color: 'green',
+      width: 30,
+      height: 30,
+      velocity: {x: 10, y: 10},
+      position: {x: canvas.width / 2, y: canvas.height / 2},
+    })
+
+    // ONCLICK
+    player.shoot(options => {
+      projectiles.push(
+        Projectile.generate({
+          ...options,
+          boundary: {width: canvas.width, height: canvas.height},
+          ctx,
+        })
+      )
+    })
+
+    animate()
+    spawnEnemies()
+  }
 
   function animate() {
     animationId = requestAnimationFrame(animate)
@@ -51,6 +66,14 @@ function init() {
       projectile.update(null, () => projectiles.splice(index, 1))
     })
 
+    particles.forEach((particle, index) => {
+      if (particle.alpha <= 0.05) {
+        particles.splice(index, 1)
+      } else {
+        particle.update()
+      }
+    })
+
     enemies.forEach((enemy, enemyIndex) => {
       enemy.update(player.position)
 
@@ -61,6 +84,12 @@ function init() {
       // End Game
       if (distance - dimension < 1) {
         cancelAnimationFrame(animationId)
+        score.gameOver(app, () =>
+          setTimeout(() => {
+            player.destroy()
+            run()
+          })
+        )
       }
 
       projectiles.forEach((projectile, projectileIndex) => {
@@ -70,14 +99,38 @@ function init() {
 
         // Check hit
         if (distance - dimension < 1) {
+          for (let count = 0; count < enemy.dimension.radius; count++) {
+            particles.push(
+              new Particle({
+                position: enemy.position,
+                boundary: {width: canvas.width, height: canvas.height},
+                velocity: {
+                  x: (Math.random() - 0.5) * (Math.random() * 5),
+                  y: (Math.random() - 0.5) * (Math.random() * 5),
+                },
+                destinationPosition: {
+                  x: enemy.position.x + 100,
+                  y: enemy.position.y + 100,
+                },
+                alpha: 1,
+                friction: 0.99,
+                color: enemy.color,
+                radius: Math.random() * 2 + 1,
+                ctx,
+              })
+            )
+          }
+
           // wait until the next frame
           if (enemy.dimension.radius - 10 > 5) {
-            enemy.dimension.radius -= 10
             setTimeout(() => {
+              score.update(10)
+              enemy.dimension.radius -= 10
               projectiles.splice(projectileIndex, 1)
             })
           } else {
             setTimeout(() => {
+              score.update(25)
               enemies.splice(enemyIndex, 1)
               projectiles.splice(projectileIndex, 1)
             })
@@ -97,11 +150,10 @@ function init() {
           ctx,
         })
       )
-    }, 2000)
+    }, 1000)
   }
 
-  animate()
-  spawnEnemies()
+  run()
 }
 
 init()
