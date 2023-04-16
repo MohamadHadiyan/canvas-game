@@ -18,6 +18,56 @@ body {
   margin: 0;
 }
 
+.score-container {
+  background-color: transparent;
+  user-select: none;
+  position: fixed;
+  font-size: 16px;
+  z-index: 2;
+  left: 8px;
+  top: 8px;
+}
+
+.game-over-container {
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 8px #00000080;
+  background-color: #ffffff;
+  color: #000000;
+  user-select: none;
+  border-radius: 8px;
+  overflow: hidden;
+  position: fixed;
+  font-size: 22px;
+  min-width: 40%;
+  padding: 20px;
+  z-index: 10;
+  left: 50%;
+  top: 50%;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.game-over-container span:first-child {
+  font-size: 30px;
+  font-weight: bolder;
+}
+
+.game-over-container button {
+  background-color: #0f79cf;
+  border: 1px solid #50b0ff;
+  box-shadow: 0 0 8px #00000060;
+  font-size: inherit;
+  border-radius: 50px;
+  padding: 16px 20px;
+  margin-top: 16px;
+  color: #ffffff;
+  cursor: pointer;
+  min-width: 50%;
+}
+
 @media (prefers-color-scheme: light) {
   :root {
     color: #213547;
